@@ -1,5 +1,10 @@
 import streamlit as st
 import requests 
+debug_mode = True    #devmode
+
+# URL του backend Flask API
+BACKEND_URL = "http://127.0.0.1:5050"
+
 # Mock προϊόντα
 #products = [
     #{"name": "Γάλα", "category": "Τρόφιμα", "price": 1.5},
@@ -14,7 +19,7 @@ import requests
 
  #Αντικατάσταση μοκ με πραγματικα δεδομενα απο mongo
 try:
-    response = requests.get("http://localhost:5000/products")
+    response = requests.get(f"{BACKEND_URL}/products")
     if response.status_code == 200:
         products = response.json()
     else:
@@ -27,6 +32,10 @@ except Exception as e:
 # Αρχικοποίηση καλαθιού 
 if "cart" not in st.session_state:  # session για να αποθηκεύουμε το καλάθι 
     st.session_state.cart = {}
+
+# Αρχικοποίηση ιστορικού αγορών (τοπικά στο session)
+if "history" not in st.session_state:
+    st.session_state.history = []
 
 st.title("🛒 SmartCart - UnipiShop")
 
@@ -74,8 +83,10 @@ for idx, product in enumerate(filtered_products):
     with st.container():
         col1, col2 = st.columns([4, 1])
         with col1:
+            st.image("http://localhost:5050" + product["image"], width=100)
             st.markdown(f"**{product['name']}** — *{product['category']}*")
             st.markdown(f"💶 Τιμή: **{product['price']} €**")
+            st.markdown(f"📄 _{product['description']}_")
         with col2:
             qty = st.number_input(
                 f"Ποσότητα", min_value=1, max_value=10, step=1, key=f"qty_{idx}"
@@ -118,19 +129,103 @@ if st.session_state.cart:
     st.write(f"**Σύνολο: {total:.2f} €**")
 
     # Κουμπί ολοκλήρωσης αγοράς
-    from datetime import datetime 
+from datetime import datetime
 
-    if st.button("Ολοκλήρωση αγοράς"):
+if st.button("Ολοκλήρωση αγοράς"):
     try:
+        # Δημιουργεί εγγραφή αγοράς με timestamp
         purchase = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "items": st.session_state.cart.copy()
         }
-        response = requests.post("http://localhost:5000/purchase", json=purchase)
+
+        # Αποθήκευση στο τοπικό ιστορικό
+        st.session_state.history.append(purchase)
+
+        # Στέλνουμε στο backend
+        response = requests.post("http://localhost:5050/purchase", json=purchase)
+
         if response.status_code == 200:
             st.success("🧾 Η αγορά ολοκληρώθηκε και καταχωρήθηκε!")
             st.session_state.cart.clear()
         else:
             st.error("❌ Η αποστολή της αγοράς απέτυχε.")
+
+        # Προσωρινή εμφάνιση για έλεγχο:
+        #st.write(st.session_state.history)
+
     except Exception as e:
         st.error(f"⚠️ Δεν μπόρεσα να συνδεθώ με το backend: {e}")
+
+#ιστορικο αγορών
+st.divider()
+st.subheader("Ιστορικό Αγορών")
+
+if st.session_state.history:
+    for entry in reversed(st.session_state.history):  # Το πιο πρόσφατο πάνω
+        st.markdown(f"**🕒 {entry['timestamp']}**")
+
+        total = 0
+        for name, item in entry["items"].items():
+            subtotal = item["qty"] * item["price"]
+            total += subtotal
+            st.markdown(f"• {name} — {item['qty']} τεμ. × {item['price']} € = {subtotal:.2f} €")
+
+        st.markdown(f"**Σύνολο: {total:.2f} €**")
+        st.markdown("---")
+else:
+    st.info("Δεν υπάρχει ακόμη ιστορικό αγορών.")
+
+#barchart
+import matplotlib.pyplot as plt
+from collections import defaultdict
+
+st.divider()
+st.subheader("📈 Γράφημα: Συχνότητα Προϊόντων σε Όλες τις Αγορές")
+
+# Υπολογισμός συνολικών ποσοτήτων για κάθε προϊόν
+product_counts = defaultdict(int)
+
+for entry in st.session_state.history:
+    for name, item in entry["items"].items():
+        product_counts[name] += item["qty"]
+
+if product_counts:
+    # Δημιουργία του bar chart
+    fig, ax = plt.subplots()
+    ax.bar(product_counts.keys(), product_counts.values())
+    ax.set_xlabel("Προϊόντα")
+    ax.set_ylabel("Συνολική Ποσότητα")
+    ax.set_title("Προϊόντα που αγοράστηκαν περισσότερο")
+
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+
+    st.pyplot(fig)
+else:
+    st.info("Δεν υπάρχουν αγορές για ανάλυση.")
+
+    #developer mode
+if debug_mode and st.session_state.history:
+    st.divider()
+    st.subheader("📊 Στατιστικά (Developer Only)")
+
+    import matplotlib.pyplot as plt
+
+    # Συγκεντρωτικά στοιχεία προϊόντων από το ιστορικό
+    product_totals = {}
+    for purchase in st.session_state.history:
+        for name, item in purchase["items"].items():
+            product_totals[name] = product_totals.get(name, 0) + item["qty"]
+
+    if product_totals:
+        fig, ax = plt.subplots()
+        ax.bar(product_totals.keys(), product_totals.values())
+        ax.set_title("Συνολικές Αγορές ανά Προϊόν")
+        ax.set_ylabel("Ποσότητα")
+        ax.set_xticklabels(product_totals.keys(), rotation=45, ha='right')
+        st.pyplot(fig)
+    else:
+        st.info("Δεν υπάρχουν δεδομένα για προβολή γραφήματος.")
+
+
