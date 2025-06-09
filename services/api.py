@@ -24,12 +24,33 @@ def send_purchase(purchase):
         return res.status_code == 200
     except:
         return False
-
+    
 def send_to_ai(cart):
     try:
         res = requests.post(f"{BACKEND_URL}/finalcart", json=cart)
         if res.status_code == 200:
             return res.json()
         return None
+    except:
+        return None
+
+def scrape_bazaar(name):
+    try:
+        res = requests.post(f"{BACKEND_URL}/scrapingbazaar", json=name)
+        return res.json() if res.status_code == 200 else None
+    except:
+        return None
+
+def scrape_marktin(name):
+    try:
+        res = requests.post(f"{BACKEND_URL}/scrapingmarkin", json=name)
+        return res.json() if res.status_code == 200 else None
+    except:
+        return None
+
+def scrape_xal(name):
+    try:
+        res = requests.post(f"{BACKEND_URL}/scrapingxal", json=name)
+        return res.json() if res.status_code == 200 else None
     except:
         return None
