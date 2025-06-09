@@ -1,0 +1,56 @@
+import requests
+
+BACKEND_URL = "http://127.0.0.1:5050"
+
+def get_all_products():
+    try:
+        res = requests.get(f"{BACKEND_URL}/getallproducts")
+        return res.json() if res.status_code == 200 else []
+    except Exception as e:
+        return []
+
+def send_purchase(purchase):
+    try:
+        res = requests.post(f"{BACKEND_URL}/purchase", json=purchase)
+        return res.status_code == 200
+    except:
+        return False
+
+def send_to_ai(cart):
+    try:
+        res = requests.post(f"{BACKEND_URL}/finalcart", json=cart)
+        if res.status_code == 200:
+            return res.json()
+        return None
+    except:
+        return None
+
+def update_product(product_id, new_price, new_desc):
+    try:
+        payload = {"price": new_price, "description": new_desc}
+        res = requests.put(f"{BACKEND_URL}/products/{product_id}", json=payload)
+        return res.status_code == 200
+    except:
+        return False
+
+def delete_product(product_id):
+    try:
+        res = requests.delete(f"{BACKEND_URL}/products/{product_id}")
+        return res.status_code == 200
+    except:
+        return False
+
+def add_product(name, price, category, subcategory, desc, image):
+    try:
+        payload = {
+            "name": name,
+            "price": price,
+            "category": category,
+            "subcategory": subcategory,
+            "description": desc,
+            "image": image
+        }
+        res = requests.post(f"{BACKEND_URL}/products", json=payload)
+        return res.status_code == 200
+    except:
+        return False
