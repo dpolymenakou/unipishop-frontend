@@ -2,6 +2,10 @@ import streamlit as st
 import requests
 from datetime import datetime
 from services.api import send_to_ai
+from app.scraping_bazaar import scraping_baz
+#image, price, description= scraoing_baz(products["name"])    
+
+
 
 # Ολοκλήρωση αγοράς και αποστολή στο backend + AI
 def render_purchase_section():

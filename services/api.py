@@ -1,4 +1,5 @@
 import requests
+from services.api import scraping_bazaar, scraping_marktin
 
 BACKEND_URL = "http://127.0.0.1:5050"
 
@@ -34,23 +35,22 @@ def send_to_ai(cart):
     except:
         return None
 
-def scrape_bazaar(name):
+def scraping_bazaar(name):
     try:
         res = requests.post(f"{BACKEND_URL}/scrapingbazaar", json=name)
-        return res.json() if res.status_code == 200 else None
+        if res.status_code == 200:
+            data = res.json()
+            return data["Εικόνα"], data["Τιμή"], data["Περιγραφή"]
     except:
-        return None
+        pass
+    return None, None, None
 
-def scrape_marktin(name):
+def scraping_marktin(name):
     try:
         res = requests.post(f"{BACKEND_URL}/scrapingmarkin", json=name)
-        return res.json() if res.status_code == 200 else None
+        if res.status_code == 200:
+            data = res.json()
+            return data["Εικόνα"], data["Τιμή"], data["Περιγραφή"]
     except:
-        return None
-
-def scrape_xal(name):
-    try:
-        res = requests.post(f"{BACKEND_URL}/scrapingxal", json=name)
-        return res.json() if res.status_code == 200 else None
-    except:
-        return None
+        pass
+    return None, None, None

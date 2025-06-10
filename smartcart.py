@@ -1,13 +1,15 @@
 import streamlit as st
-from services.api import get_all_products
 from views.filters import render_filters
 from views.product_list import render_product_list
 from views.cart import render_cart
 from views.purchase import render_purchase_section
 from views.history import render_purchase_history
+from views.developer import render_developer
+from services.api import get_all_products
+
 
 #Developer Mode
-dev_mode = st.sidebar.checkbox("Developer Mode")
+dev_mode = st.sidebar.toggle("Developer Mode")
 
 # Αν ο χρήστης είναι Developer
 if dev_mode:

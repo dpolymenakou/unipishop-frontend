@@ -17,6 +17,7 @@ def render_cart():
         col1, col2 = st.columns([4, 1]) # 2 στήλες: για κείμενο & κουμπί
         with col1:     # Όνομα, κατηγορία, ποσότητα
             st.markdown(f"**{name}**<br><small>{item['qty']} τεμ.</small>", unsafe_allow_html=True)
+            
         with col2:     # Κουμπί αφαίρεσης προϊόντος
             st.markdown(f"<span style='color:green'><b>{item['price']} €</b></span>", unsafe_allow_html=True)
             if st.button("❌", key=f"remove_{name}"):
